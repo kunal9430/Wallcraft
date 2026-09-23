@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<script>
+window.onerror=function(msg,src,line,col,err){window.parent.postMessage({type:'app-error',message:msg,source:src,lineno:line,colno:col,stack:err&&err.stack||''},'*');};
+window.onunhandledrejection=function(e){window.parent.postMessage({type:'app-error',message:'Unhandled promise rejection: '+(e.reason&&e.reason.message||e.reason||'unknown'),stack:e.reason&&e.reason.stack||''},'*');};
+window.addEventListener('error',function(e){var t=e&&e.target;if(t&&t!==window&&t.tagName==='SCRIPT'){var u=t.src||'';window.parent.postMessage({type:'app-error',message:'Failed to load script'+(u?': '+u:' (inline module)'),source:u},'*');}},true);
+(function(){var _f=window.fetch;window.fetch=function(){var a=arguments,u=typeof a[0]==='string'?a[0]:(a[0]&&a[0].url)||'';var p=_f.apply(this,a);p.then(function(r){if(r.status===500){r.clone().text().then(function(b){window.parent.postMessage({type:'fetch-error',url:u,status:500,body:b},'*');}).catch(function(){window.parent.postMessage({type:'fetch-error',url:u,status:500,body:''},'*');});}}).catch(function(e){window.parent.postMessage({type:'fetch-error',url:u,status:0,body:e.message||'fetch failed'},'*');});return p;};})();
+</script>
+<script src="https://builder.puter.com/runtime.js" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b10">
+<meta name="description" content="Generate AI wallpapers sized for your Android phone and set them on your home screen, lock screen, or both.">
+<title>Wallcraft — AI Wallpapers</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{ink:{950:'#0b0b10',900:'#111118',850:'#16161f',800:'#1c1c27',700:'#2a2a38',600:'#3a3a4c'},accent:{DEFAULT:'#7c5cff',soft:'#9d85ff'}},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://js.puter.com/v2/"></script>
+<style>
+  html,body{background:#0b0b10;color:#ececf1;-webkit-tap-highlight-color:transparent}
+  .no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{scrollbar-width:none}
+  .phone{aspect-ratio:9/19.5;border-radius:34px;border:6px solid #22222e;background:#16161f;overflow:hidden;position:relative}
+  .phone img.wall{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .shimmer{background:linear-gradient(110deg,#16161f 30%,#23232f 50%,#16161f 70%);background-size:200% 100%;animation:sh 1.4s linear infinite}
+  @keyframes sh{to{background-position:-200% 0}}
+  .sheet{transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+  .sheet.open{transform:translateY(0)}
+  .fade{opacity:0;pointer-events:none;transition:opacity .2s}
+  .fade.open{opacity:1;pointer-events:auto}
+  input[type=range]{accent-color:#7c5cff}
+  .chip[aria-pressed=true]{background:#7c5cff;border-color:#7c5cff;color:#fff}
+  .seg[aria-pressed=true]{background:#2a2a38;color:#fff}
+  .target[aria-pressed=true]{border-color:#7c5cff;background:rgba(124,92,255,.1)}
+  .target[aria-pressed=true] .radio{border-color:#7c5cff}
+  .target[aria-pressed=true] .radio::after{content:'';position:absolute;inset:3px;border-radius:999px;background:#7c5cff}
+  .spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+    <!-- puter-pwa: generated, do not edit -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Wallcraft">
+    <!-- /puter-pwa -->
+</head>
+<body class="font-sans antialiased min-h-screen">
+<div id="app" class="max-w-6xl mx-auto min-h-screen flex flex-col">
+
+  <!-- Top bar -->
+  <header class="sticky top-0 z-30 bg-ink-950/90 backdrop-blur border-b border-ink-800">
+    <div class="flex items-center justify-between px-4 h-14">
+      <div class="flex items-center gap-2.5">
+        <img src="icon.svg" class="w-8 h-8" alt="">
+        <div class="leading-tight">
+          <div class="font-semibold tracking-tight">Wallcraft</div>
+          <div class="text-[11px] text-zinc-500">AI wallpapers for Android</div>
+        </div>
+      </div>
+      <nav class="hidden md:flex items-center bg-ink-900 border border-ink-800 rounded-xl p-1 text-sm">
+        <button data-tab="create" class="tabbtn seg px-4 py-1.5 rounded-lg text-zinc-400" aria-pressed="true">Create</button>
+        <button data-tab="gallery" class="tabbtn seg px-4 py-1.5 rounded-lg text-zinc-400" aria-pressed="false">My wallpapers</button>
+      </nav>
+      <div id="authArea" class="flex items-center gap-2"></div>
+    </div>
+  </header>
+
+  <!-- CREATE -->
+  <main id="view-create" class="flex-1 px-4 pt-4 pb-28 md:pb-10 grid md:grid-cols-[1fr_360px] gap-6">
+    <section class="space-y-5 order-2 md:order-1">
+      <div>
+        <label class="text-sm font-medium text-zinc-300 flex items-center justify-between mb-2">
+          Describe your wallpaper
+          <button id="surpriseBtn" class="text-xs text-accent-soft flex items-center gap-1 hover:text-white"><i data-lucide="shuffle" class="w-3.5 h-3.5"></i>Surprise me</button>
+        </label>
+        <div class="bg-ink-900 border border-ink-800 rounded-2xl focus-within:border-accent transition-colors">
+          <textarea id="prompt" rows="3" maxlength="600" class="w-full bg-transparent resize-none p-4 outline-none placeholder:text-zinc-600 text-[15px]" placeholder="A quiet mountain lake at dawn, soft mist, pastel sky..."></textarea>
+          <div class="flex items-center justify-between px-3 pb-3">
+            <span id="charCount" class="text-[11px] text-zinc-600">0 / 600</span>
+            <button id="clearPrompt" class="text-zinc-500 hover:text-white p-1" title="Clear"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-sm font-medium text-zinc-300 mb-2">Style</div>
+        <div id="styles" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <div class="text-sm font-medium text-zinc-300 mb-2">Screen size</div>
+          <div class="relative">
+            <select id="resolution" class="w-full appearance-none bg-ink-900 border border-ink-800 rounded-xl px-4 py-3 text-sm outline-none focus:border-accent"></select>
+            <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"></i>
+          </div>
+        </div>
+        <div>
+          <div class="text-sm font-medium text-zinc-300 mb-2">Quality</div>
+          <div class="flex bg-ink-900 border border-ink-800 rounded-xl p-1 text-sm" id="quality">
+            <button data-q="fast" class="seg flex-1 py-2 rounded-lg text-zinc-400" aria-pressed="true">Fast</button>
+            <button data-q="hd" class="seg flex-1 py-2 rounded-lg text-zinc-400" aria-pressed="false">HD</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="generateBtn" class="w-full h-14 rounded-2xl bg-accent hover:bg-accent-soft active:scale-[.99] transition font-semibold flex items-center justify-center gap-2 disabled:opacity-60">
+        <i data-lucide="sparkles" class="w-5 h-5"></i><span>Generate wallpaper</span>
+      </button>
+
+      <div id="adjustPanel" class="hidden bg-ink-900 border border-ink-800 rounded-2xl p-4 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="text-sm font-medium">Adjust</div>
+          <button id="resetAdjust" class="text-xs text-zinc-500 hover:text-white">Reset</button>
+        </div>
+        <label class="block">
+          <div class="flex justify-between text-xs text-zinc-400 mb-1.5"><span>Dim (improves icon & clock readability)</span><span id="dimVal">0%</span></div>
+          <input id="dim" type="range" min="0" max="60" value="0" class="w-full">
+        </label>
+        <label class="block">
+          <div class="flex justify-between text-xs text-zinc-400 mb-1.5"><span>Saturation</span><span id="satVal">100%</span></div>
+          <input id="sat" type="range" min="0" max="160" value="100" class="w-full">
+        </label>
+        <label class="block">
+          <div class="flex justify-between text-xs text-zinc-400 mb-1.5"><span>Blur</span><span id="blurVal">0px</span></div>
+          <input id="blur" type="range" min="0" max="20" value="0" class="w-full">
+        </label>
+      </div>
+
+      <div id="recentWrap" class="hidden">
+        <div class="text-sm font-medium text-zinc-300 mb-2">This session</div>
+        <div id="recent" class="flex gap-2 overflow-x-auto no-scrollbar pb-1"></div>
+      </div>
+    </section>
+
+    <!-- Preview -->
+    <aside class="order-1 md:order-2 md:sticky md:top-20 self-start w-full">
+      <div class="flex items-center justify-center mb-3">
+        <div class="flex bg-ink-900 border border-ink-800 rounded-xl p-1 text-xs" id="previewMode">
+          <button data-mode="home" class="seg px-3 py-1.5 rounded-lg text-zinc-400 flex items-center gap-1.5" aria-pressed="true"><i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>Home</button>
+          <button data-mode="lock" class="seg px-3 py-1.5 rounded-lg text-zinc-400 flex items-center gap-1.5" aria-pressed="false"><i data-lucide="lock" class="w-3.5 h-3.5"></i>Lock</button>
+          <button data-mode="clean" class="seg px-3 py-1.5 rounded-lg text-zinc-400 flex items-center gap-1.5" aria-pressed="false"><i data-lucide="image" class="w-3.5 h-3.5"></i>Clean</button>
+        </div>
+      </div>
+      <div class="mx-auto w-[230px] sm:w-[260px]">
+        <div id="phone" class="phone">
+          <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 text-zinc-500">
+            <div class="w-12 h-12 rounded-2xl bg-ink-800 flex items-center justify-center mb-3"><i data-lucide="smartphone" class="w-6 h-6"></i></div>
+            <div class="text-sm text-zinc-300 font-medium">Your wallpaper appears here</div>
+            <div class="text-xs mt-1">Describe an idea and tap Generate</div>
+          </div>
+          <div id="loading" class="hidden absolute inset-0 shimmer flex flex-col items-center justify-center text-center px-6">
+            <i data-lucide="loader-2" class="w-7 h-7 spin text-accent-soft"></i>
+            <div class="text-sm mt-3 text-zinc-300" id="loadingText">Painting your wallpaper…</div>
+            <div class="text-[11px] text-zinc-500 mt-1">This can take 10–40 seconds</div>
+          </div>
+          <img id="wallImg" class="wall hidden" alt="Generated wallpaper">
+          <div id="overlayHome" class="absolute inset-0 hidden pointer-events-none"></div>
+          <div id="overlayLock" class="absolute inset-0 hidden pointer-events-none"></div>
+        </div>
+      </div>
+      <div id="resultMeta" class="hidden text-center text-[11px] text-zinc-500 mt-3"></div>
+
+      <div id="actions" class="hidden mt-4 grid grid-cols-4 gap-2 max-w-[360px] mx-auto">
+        <button id="setWallBtn" class="col-span-4 h-12 rounded-xl bg-white text-ink-950 font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200">
+          <i data-lucide="smartphone" class="w-4 h-4"></i>Set as wallpaper
+        </button>
+        <button id="downloadBtn" class="h-14 rounded-xl bg-ink-900 border border-ink-800 hover:border-ink-600 flex flex-col items-center justify-center gap-1 text-[11px] text-zinc-300"><i data-lucide="download" class="w-4 h-4"></i>Save</button>
+        <button id="saveBtn" class="h-14 rounded-xl bg-ink-900 border border-ink-800 hover:border-ink-600 flex flex-col items-center justify-center gap-1 text-[11px] text-zinc-300"><i data-lucide="bookmark" class="w-4 h-4"></i>Keep</button>
+        <button id="regenBtn" class="h-14 rounded-xl bg-ink-900 border border-ink-800 hover:border-ink-600 flex flex-col items-center justify-center gap-1 text-[11px] text-zinc-300"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Again</button>
+        <button id="shareBtn" class="h-14 rounded-xl bg-ink-900 border border-ink-800 hover:border-ink-600 flex flex-col items-center justify-center gap-1 text-[11px] text-zinc-300"><i data-lucide="share-2" class="w-4 h-4"></i>Share</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- GALLERY -->
+  <main id="view-gallery" class="hidden flex-1 px-4 pt-4 pb-28 md:pb-10">
+    <div class="flex items-end justify-between mb-4">
+      <div>
+        <h1 class="text-xl font-semibold tracking-tight">My wallpapers</h1>
+        <p class="text-sm text-zinc-500" id="galleryCount">Saved to your account</p>
+      </div>
+      <button id="refreshGallery" class="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-ink-800" title="Refresh"><i data-lucide="rotate-cw" class="w-4 h-4"></i></button>
+    </div>
+    <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
+  </main>
+
+  <!-- Bottom nav (mobile) -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-ink-950/95 backdrop-blur border-t border-ink-800 pb-[env(safe-area-inset-bottom)]">
+    <div class="grid grid-cols-2 h-16">
+      <button data-tab="create" class="tabbtn-m flex flex-col items-center justify-center gap-1 text-[11px]"><i data-lucide="wand-sparkles" class="w-5 h-5"></i>Create</button>
+      <button data-tab="gallery" class="tabbtn-m flex flex-col items-center justify-center gap-1 text-[11px]"><i data-lucide="images" class="w-5 h-5"></i>My wallpapers</button>
+    </div>
+  </nav>
+</div>
+
+<!-- Set wallpaper sheet -->
+<div id="backdrop" class="fade fixed inset-0 z-40 bg-black/60"></div>
+<div id="sheet" class="sheet fixed z-50 inset-x-0 bottom-0 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[440px] md:bottom-6 md:rounded-3xl bg-ink-900 border border-ink-800 rounded-t-3xl pb-[env(safe-area-inset-bottom)]">
+  <div class="p-5">
+    <div class="w-10 h-1 rounded-full bg-ink-700 mx-auto mb-4 md:hidden"></div>
+    <div class="flex items-start justify-between mb-4">
+      <div>
+        <h2 class="text-lg font-semibold">Set as wallpaper</h2>
+        <p class="text-sm text-zinc-500">Choose where to apply it</p>
+      </div>
+      <button id="closeSheet" class="p-2 -mr-2 -mt-1 text-zinc-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div class="grid grid-cols-3 gap-2" id="targets">
+      <button data-target="home" class="target relative border border-ink-700 rounded-2xl p-3 flex flex-col items-center gap-2 text-sm" aria-pressed="false">
+        <span class="radio absolute top-2 right-2 w-4 h-4 rounded-full border border-ink-600"></span>
+        <i data-lucide="layout-grid" class="w-6 h-6 text-zinc-300"></i>Home screen
+      </button>
+      <button data-target="lock" class="target relative border border-ink-700 rounded-2xl p-3 flex flex-col items-center gap-2 text-sm" aria-pressed="false">
+        <span class="radio absolute top-2 right-2 w-4 h-4 rounded-full border border-ink-600"></span>
+        <i data-lucide="lock" class="w-6 h-6 text-zinc-300"></i>Lock screen
+      </button>
+      <button data-target="both" class="target relative border border-ink-700 rounded-2xl p-3 flex flex-col items-center gap-2 text-sm" aria-pressed="true">
+        <span class="radio absolute top-2 right-2 w-4 h-4 rounded-full border border-ink-600"></span>
+        <i data-lucide="layers" class="w-6 h-6 text-zinc-300"></i>Both
+      </button>
+    </div>
+
+    <div class="mt-4 bg-ink-850 border border-ink-800 rounded-2xl p-4">
+      <div class="text-xs font-medium text-zinc-400 mb-2 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i>How it works on Android</div>
+      <ol id="steps" class="text-sm text-zinc-300 space-y-1.5 list-decimal list-inside"></ol>
+    </div>
+
+    <button id="applyBtn" class="mt-4 w-full h-12 rounded-xl bg-accent hover:bg-accent-soft font-semibold flex items-center justify-center gap-2">
+      <i data-lucide="check" class="w-4 h-4"></i><span id="applyLabel">Apply to both screens</span>
+    </button>
+    <button id="applyDownload" class="mt-2 w-full h-11 rounded-xl text-sm text-zinc-400 hover:text-white">Or download the image instead</button>
+  </div>
+</div>
+
+<!-- Gallery viewer -->
+<div id="viewer" class="fade fixed inset-0 z-50 bg-ink-950/95 flex flex-col">
+  <div class="flex items-center justify-between p-4">
+    <button id="closeViewer" class="p-2 rounded-lg hover:bg-ink-800"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+    <div class="text-sm text-zinc-400 truncate px-4" id="viewerTitle"></div>
+    <button id="deleteViewer" class="p-2 rounded-lg hover:bg-ink-800 text-red-400"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+  </div>
+  <div class="flex-1 flex items-center justify-center px-4 min-h-0">
+    <img id="viewerImg" class="max-h-full max-w-full rounded-2xl object-contain" alt="">
+  </div>
+  <div class="p-4 grid grid-cols-3 gap-2 max-w-md w-full mx-auto">
+    <button id="viewerSet" class="col-span-2 h-12 rounded-xl bg-white text-ink-950 font-semibold flex items-center justify-center gap-2"><i data-lucide="smartphone" class="w-4 h-4"></i>Set as wallpaper</button>
+    <button id="viewerDownload" class="h-12 rounded-xl bg-ink-900 border border-ink-800 flex items-center justify-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i>Save</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fade fixed z-[60] left-1/2 -translate-x-1/2 bottom-24 md:bottom-8 bg-white text-ink-950 text-sm font-medium px-4 py-2.5 rounded-xl max-w-[90vw] text-center"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

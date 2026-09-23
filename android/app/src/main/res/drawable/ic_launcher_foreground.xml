@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wallcraft icon: a phone with a landscape wallpaper and an AI sparkle -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- phone outline -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:fillColor="#00000000"
+        android:pathData="M45,31h18a5,5 0 0,1 5,5v36a5,5 0 0,1 -5,5H45a5,5 0 0,1 -5,-5V36a5,5 0 0,1 5,-5z" />
+    <!-- mountains -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44.5,71l7,-9.5l4.5,5.2l3.5,-4.2l4.5,8.5z" />
+    <!-- big sparkle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M57.5,37.5Q58.4,43.6 64.5,44.5Q58.4,45.4 57.5,51.5Q56.6,45.4 50.5,44.5Q56.6,43.6 57.5,37.5z" />
+    <!-- small sparkle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48.5,47Q48.9,49.1 51,49.5Q48.9,49.9 48.5,52Q48.1,49.9 46,49.5Q48.1,49.1 48.5,47z" />
+</vector>
